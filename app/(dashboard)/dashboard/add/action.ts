@@ -3,7 +3,8 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-
+import { pusher } from "@/lib/pusher";
+import { toPusherKey } from "@/lib/utils";
 export async function addFriendAction({ email }: { email: string }) {
   const toAddFriend = ((await db.get(`user:email:${email}`)) as string) || null;
   const session = await getServerSession(authOptions);
@@ -17,15 +18,27 @@ export async function addFriendAction({ email }: { email: string }) {
   // check if the user try to add the existing add.
   const isAlreadyAdded = await db.sismember(
     `user:${toAddFriend}:incoming_friend_requests`,
-    session.user.id,
+    session.user.id
   );
   if (isAlreadyAdded)
     return { message: "You are actually add him.", okay: false };
   // check of if they are friends
   const isFriend = await db.sismember(
     `user:${toAddFriend}:friends`,
-    session.user.id,
+    session.user.id
   );
   if (isFriend) return { message: "You are actually a friends.", okay: false };
-  db.sadd(`user:${toAddFriend}:incoming_friend_requests`, session.user.id);
+  await db.sadd(
+    `user:${toAddFriend}:incoming_friend_requests`,
+    session.user.id
+  );
+
+  pusher.trigger(
+    toPusherKey(`user:${toAddFriend}:incoming_friend_requests`),
+    "incoming_friend_requests",
+    {
+      senderId: session.user.id,
+      senderEmail: session.user.email,
+    }
+  );
 }

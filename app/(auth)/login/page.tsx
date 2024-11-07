@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import toast from 'react-hot-toast'
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
@@ -8,17 +8,12 @@ import { LuLoader2 } from "react-icons/lu";
 
 export default function Page() {
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
   const loginWithGoogle = async () => {
     try {
       setIsLoading(true);
       await signIn("google");
     } catch (error) {
-      toast({
-        title: "Some thing wrong try again.",
-        description: "please try again later.",
-        variant: "destructive",
-      });
+      toast.error('There is something wrong try again later.');
     } finally {
       setIsLoading(false);
     }

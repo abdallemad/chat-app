@@ -7,7 +7,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
 import { addFriendSchema, AddFriendType } from "@/lib/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -15,9 +14,9 @@ import { useForm } from "react-hook-form";
 import { Button } from "../../../../components/ui/button";
 import { Input } from "../../../../components/ui/input";
 import { addFriendAction } from "./action";
+import toast from "react-hot-toast";
 
 export default function AddFriendButton() {
-  const { toast } = useToast();
   const form = useForm<AddFriendType>({
     resolver: zodResolver(addFriendSchema),
     defaultValues: {
@@ -29,26 +28,13 @@ export default function AddFriendButton() {
     mutationFn: async ({ email }: AddFriendType) =>
       await addFriendAction({ email }),
     onError: () => {
-      toast({
-        title: "Error",
-        description: "There is something wrong try again later.",
-        variant: "destructive",
-      });
+      toast.error("There is something wrong try again later.");
     },
     onSuccess: (data) => {
       if (data && "okay" in data && data.okay === false) {
-        return toast({
-          title: "Error",
-          description: data.message,
-          variant: "destructive",
-        });
-      } else
-        return toast({
-          title: "Success",
-          description: "You have send a friend request!",
-          className: "bg-green-600 text-white",
-        });
-      // form.reset();
+        return toast.error(data.message);
+      } else return toast.success("Friend added successfully.");
+      form.reset();
     },
   });
   const handelSubmit = ({ email }: AddFriendType) => {
@@ -56,20 +42,21 @@ export default function AddFriendButton() {
   };
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handelSubmit)} className="max-w-sm p-4">
+      <form
+        onSubmit={form.handleSubmit(handelSubmit)}
+        className="max-w-xl py-2"
+      >
         <FormField
           control={form.control}
           name={"email"}
           render={({ field }) => (
             <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel className="capitalize">email</FormLabel>
-                <FormMessage />
-              </div>
+              <FormLabel className="capitalize">email</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} className="w-[500px] mb-8" />
               </FormControl>
-              <Button type="submit" disabled={isPending}>
+              <FormMessage />
+              <Button type="submit" disabled={isPending} size={'lg'} className="w-[500px] mt-8 block">
                 Add
               </Button>
             </FormItem>

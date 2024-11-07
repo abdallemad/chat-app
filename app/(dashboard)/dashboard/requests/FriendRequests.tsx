@@ -1,10 +1,12 @@
 "use client";
 import { Check, UserPlus, X } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { acceptFriendAction, denyFriendAction } from "./action";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/hooks/use-toast";
+import toast from 'react-hot-toast';
+import Pusher from "pusher-js";
+import { toPusherKey } from "@/lib/utils";
 
 export default function FriendRequests({
   incomingFriends,
@@ -16,7 +18,25 @@ export default function FriendRequests({
   const [incomingFriendRequests, setIncomingFriendRequest] =
     useState<IncomingFriendRequests[]>(incomingFriends);
   const router = useRouter();
-  const { toast } = useToast();
+
+  // Initialize Pusher
+  useEffect(() => {
+    // Initialize Pusher client
+    const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+    });
+
+    // Subscribe to the "user:sessionId:incoming_friend_requests" channel and bind to "incoming_friend_requests" events
+    const channel = pusher.subscribe(toPusherKey(`user:${sessionId}:incoming_friend_requests`));
+    channel.bind("incoming_friend_requests",(incomingFriendRequests: IncomingFriendRequests)=>{
+      setIncomingFriendRequest((prev) => [...prev,incomingFriendRequests]);
+    } );
+
+    return () => {
+      pusher.unsubscribe(toPusherKey(`user:${sessionId}:incoming_friend_requests`));
+      pusher.disconnect();
+    };
+  }, [ sessionId ]);
   const { mutate: acceptFriend } = useMutation({
     mutationFn: async ({
       sessionId,
@@ -30,28 +50,16 @@ export default function FriendRequests({
     },
     onSuccess: (senderId) => {
       setIncomingFriendRequest((prev) =>
-        prev.filter((req) => req.senderId !== senderId),
+        prev.filter((req) => req.senderId !== senderId)
       );
-      toast({
-        title: "Accepted!",
-        description: "You have Accept this friend",
-        className: "bg-green-600 text-white",
-      });
+      toast.success('Friend added successfully.');
       router.refresh();
     },
     onError(err) {
       if (err instanceof Error)
-        toast({
-          title: "Error",
-          description: err.message,
-          variant: "destructive",
-        });
+        toast.error(err.message);
       else
-        toast({
-          title: "Error",
-          description: "There is something happened try again later!",
-          variant: "destructive",
-        });
+        toast.error('There is something happened try again later!');
     },
   });
   const { mutate: denyFriend } = useMutation({
@@ -67,28 +75,16 @@ export default function FriendRequests({
     },
     onSuccess: (senderId) => {
       setIncomingFriendRequest((prev) =>
-        prev.filter((req) => req.senderId !== senderId),
+        prev.filter((req) => req.senderId !== senderId)
       );
-      toast({
-        title: "Denied!",
-        description: "You have deny this friend",
-        className: "bg-green-600 text-white",
-      });
+      toast.success('Denied Successfully!');
       router.refresh();
     },
     onError(err) {
       if (err instanceof Error)
-        toast({
-          title: "Error",
-          description: err.message,
-          variant: "destructive",
-        });
+        toast.error(err.message);
       else
-        toast({
-          title: "Error",
-          description: "There is something happened try again later!",
-          variant: "destructive",
-        });
+        toast.error('There is something happened try again later!');
     },
   });
   return (
@@ -132,3 +128,4 @@ export default function FriendRequests({
     </>
   );
 }
+

@@ -9,7 +9,7 @@ import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import React from "react";
 
 interface SidebarOption {
@@ -33,7 +33,7 @@ export default async function layout({
     },
   ];
   const session = await getServerSession(authOptions);
-  if (!session?.user) return notFound();
+  if (!session?.user) return redirect("/login");
 
   const friends = await getFriendsByUserId(session?.user.id);
   // console.log(friends);
@@ -119,7 +119,9 @@ export default async function layout({
           </ul>
         </nav>
       </div>
-      {children}
+      <aside className="max-h-screen container py-16 md:py-12 w-full">
+        {children}
+      </aside>
     </div>
   );
 }

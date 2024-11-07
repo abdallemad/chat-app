@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import { useMutation } from "@tanstack/react-query";
 import { sendMessageAction } from "../action";
-import { useToast } from "@/hooks/use-toast";
+import toast from 'react-hot-toast'
 
 export default function ChatInput({
   chatPartner,
@@ -14,9 +14,9 @@ export default function ChatInput({
   chatPartner: User;
   chatId: string;
 }) {
-  const { toast } = useToast();
   const { mutate: sendMessage, isPending: isLoading } = useMutation({
     mutationFn: async () => {
+      if (!input) return;
       await sendMessageAction({ message: input, chatId });
     },
     onSuccess() {
@@ -24,11 +24,7 @@ export default function ChatInput({
       textareaRef.current?.focus();
     },
     onError() {
-      toast({
-        title: "Error",
-        description: "some thing wrong happened try later.",
-        variant: "destructive",
-      });
+      toast.error('Something went wrong');
     },
   });
   const textareaRef = useRef<HTMLTextAreaElement>(null);

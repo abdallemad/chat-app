@@ -3,17 +3,19 @@ import React, { ButtonHTMLAttributes } from "react";
 import { Button } from "./ui/button";
 import { useState } from "react";
 import { signOut } from "next-auth/react";
-import { useToast } from "@/hooks/use-toast";
 import { Loader2, LogOutIcon } from "lucide-react";
+import toast from "react-hot-toast";
+
 
 interface SingOutButtonAttribute
-  extends ButtonHTMLAttributes<HTMLButtonElement> {}
+  extends ButtonHTMLAttributes<HTMLButtonElement> {
+    name?:string | undefined
+  }
 
 export default function SignOutButton({
   className,
   ...props
 }: SingOutButtonAttribute) {
-  const { toast } = useToast();
   const [isSingingOut, setIsSingingOut] = useState(false);
   return (
     <Button
@@ -24,11 +26,7 @@ export default function SignOutButton({
         try {
           await signOut();
         } catch (error) {
-          toast({
-            description: "some thing went wrong",
-            title: "Error",
-            variant: "destructive",
-          });
+          toast.error("Error!")
         } finally {
           setIsSingingOut(false);
         }

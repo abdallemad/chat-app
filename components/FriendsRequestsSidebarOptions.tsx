@@ -1,7 +1,9 @@
 "use client";
+import { toPusherKey } from "@/lib/utils";
 import { User } from "lucide-react";
 import Link from "next/link";
-import React, { useState } from "react";
+import Pusher from "pusher-js";
+import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 
 export default function FriendsRequestsSidebarOptions({
@@ -12,8 +14,33 @@ export default function FriendsRequestsSidebarOptions({
   sessionId: string;
 }) {
   const [unseenRequestCount, setUnseenRequestCount] = useState(
-    initialUnseenRequestsCount,
+    initialUnseenRequestsCount
   );
+  // Initialize Pusher
+  useEffect(() => {
+    // Initialize Pusher client
+    const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+    });
+
+    // Subscribe to the "user:sessionId:incoming_friend_requests" channel and bind to "incoming_friend_requests" events
+    const channel = pusher.subscribe(
+      toPusherKey(`user:${sessionId}:incoming_friend_requests`)
+    );
+    channel.bind(
+      "incoming_friend_requests",
+      (incomingFriendRequests: IncomingFriendRequests) => {
+        setUnseenRequestCount((prev) => prev + 1);
+      }
+    );
+
+    return () => {
+      pusher.unsubscribe(
+        toPusherKey(`user:${sessionId}:incoming_friend_requests`)
+      );
+      pusher.disconnect();
+    };
+  }, [ sessionId ]);
   return (
     <Button
       variant={"ghost"}

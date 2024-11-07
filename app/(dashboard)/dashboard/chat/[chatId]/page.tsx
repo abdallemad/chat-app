@@ -6,6 +6,7 @@ import { arrayMessagesValidate } from "@/lib/validators";
 import Image from "next/image";
 import Messages from "./Messages";
 import ChatInput from "./ChatInput";
+
 async function getChatMessages(chatId: string) {
   try {
     const dbMessages: Message[] = await db.zrange(
@@ -64,6 +65,7 @@ export default async function page({ params }: { params: { chatId: string } }) {
         chatPartner={chatPartner}
         sessionImage={session.user.image || ""}
         sessionId={session.user.id}
+        chatId={chatId}
         initialMessages={initialMessages}
       />
       <ChatInput chatId={chatId} chatPartner={chatPartner} />

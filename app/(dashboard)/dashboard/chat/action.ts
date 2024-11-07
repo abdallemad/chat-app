@@ -6,6 +6,8 @@ import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import { nanoid } from "nanoid";
 import { messageValidate } from "@/lib/validators";
+import { pusher } from "@/lib/pusher";
+import { toPusherKey } from "@/lib/utils";
 
 export async function sendMessageAction({
   message: text,
@@ -24,7 +26,6 @@ export async function sendMessageAction({
     friendId
   );
   if (!isInFriendList) return notFound();
-  const user = await db.get(`user:${session.user.id}`);
   // all valid and send the message.
   const timestamp = Date.now()
   const messageData:Message = {
@@ -35,9 +36,24 @@ export async function sendMessageAction({
     timestamp
   };
   const message = messageValidate.parse(messageData);
+
+  pusher.trigger(
+    toPusherKey(`chat:${chatId}:messages`),
+    "new_message",
+    message
+  );
+  pusher.trigger(
+    toPusherKey(`user:${friendId}:chats`),
+    "new_message",
+    {
+      ...message,
+      senderImage:session.user.image,
+      senderName:session.user.name,
+    }
+  )
   await db.zadd(`chat:${chatId}:messages`, {
     score: timestamp,
     member: JSON.stringify(message),
   });
-  console.log(user);
+  
 }

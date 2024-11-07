@@ -1,22 +1,41 @@
 "use client";
 import { cn } from "@/lib/utils";
 import { Message } from "@/lib/validators";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import Image from "next/image";
+import Pusher from "pusher-js";
+import { toPusherKey } from "@/lib/utils";
 export default function Messages({
   initialMessages,
   sessionId,
   sessionImage,
   chatPartner,
+  chatId
 }: {
   initialMessages: Message[];
   sessionId: string;
   sessionImage: string;
   chatPartner: User;
+  chatId:string,
 }) {
   const scrollDownRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<Message[]>(initialMessages);
+
+  useEffect(()=>{
+    const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+    });
+
+    const channel = pusher.subscribe(toPusherKey(`chat:${chatId}:messages`));
+    channel.bind("new_message", (newMessage: Message) => {
+      setMessages((prev) => [newMessage, ...prev]);
+    });
+    return () => {
+      pusher.unsubscribe(toPusherKey(`chat:${chatId}:messages`));
+      pusher.disconnect();
+    };
+  },[chatId]);
   const formateTimeStamp = (date: number) => {
     return format(date, "HH:mm");
   };
