@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { LuLoader2 } from "react-icons/lu";
+import { Icons } from "@/components/Icons";
 
 export default function Page() {
   const [isLoading, setIsLoading] = useState(false);
@@ -23,7 +24,7 @@ export default function Page() {
       <div className="flex min-h-full items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="w-full flex flex-col items-center max-w-md space-y-8 ">
           <div className="flex flex-col items-center gap-8">
-            logo
+            <Icons.Logo className="h-8 w-8 text-indigo-600" />
             <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
               Sign in to your Account
             </h2>
